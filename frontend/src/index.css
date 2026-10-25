@@ -1,0 +1,103 @@
+@import url('https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=Public+Sans:wght@400;500;600;700&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+    margin: 0;
+    font-family: 'Atkinson Hyperlegible', 'Public Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+@layer base {
+    :root {
+        --background: 60 9% 98%;
+        --foreground: 20 12% 15%;
+        --card: 0 0% 100%;
+        --card-foreground: 20 12% 15%;
+        --popover: 0 0% 100%;
+        --popover-foreground: 20 12% 15%;
+        --primary: 167 20% 46%;
+        --primary-foreground: 0 0% 100%;
+        --secondary: 38 62% 71%;
+        --secondary-foreground: 24 20% 20%;
+        --muted: 40 12% 94%;
+        --muted-foreground: 25 6% 38%;
+        --accent: 167 22% 92%;
+        --accent-foreground: 167 30% 25%;
+        --destructive: 8 62% 58%;
+        --destructive-foreground: 0 0% 100%;
+        --border: 30 12% 88%;
+        --input: 30 12% 88%;
+        --ring: 182 18% 52%;
+        --chart-1: 167 20% 46%;
+        --chart-2: 38 62% 65%;
+        --chart-3: 11 74% 74%;
+        --chart-4: 182 18% 55%;
+        --chart-5: 145 22% 55%;
+        --radius: 1rem;
+    }
+    .dark {
+        --background: 24 9% 10%;
+        --foreground: 60 9% 96%;
+        --card: 24 9% 15%;
+        --card-foreground: 60 9% 96%;
+        --popover: 24 9% 15%;
+        --popover-foreground: 60 9% 96%;
+        --primary: 182 20% 58%;
+        --primary-foreground: 24 12% 12%;
+        --secondary: 30 40% 60%;
+        --secondary-foreground: 24 20% 12%;
+        --muted: 24 8% 20%;
+        --muted-foreground: 30 8% 72%;
+        --accent: 24 8% 24%;
+        --accent-foreground: 60 9% 92%;
+        --destructive: 8 55% 48%;
+        --destructive-foreground: 0 0% 100%;
+        --border: 24 8% 26%;
+        --input: 24 8% 26%;
+        --ring: 174 34% 60%;
+        --chart-1: 182 20% 58%;
+        --chart-2: 30 40% 60%;
+        --chart-3: 11 55% 65%;
+        --chart-4: 174 34% 60%;
+        --chart-5: 145 25% 55%;
+    }
+}
+
+@layer base {
+    * {
+        @apply border-border;
+    }
+    body {
+        @apply bg-background text-foreground;
+    }
+    ::selection {
+        background: hsl(var(--primary) / 0.22);
+    }
+    * {
+        scrollbar-width: thin;
+        scrollbar-color: hsl(var(--border)) transparent;
+    }
+    ::-webkit-scrollbar { width: 10px; height: 10px; }
+    ::-webkit-scrollbar-thumb { background: hsl(var(--border)); border-radius: 9999px; }
+}
+
+@layer utilities {
+    .lumina-fade-in {
+        animation: luminaFade 0.5s ease-in-out both;
+    }
+    @keyframes luminaFade {
+        from { opacity: 0; transform: translateY(8px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    .lumina-grid-bg {
+        background-image:
+            radial-gradient(hsl(var(--primary) / 0.18) 1.5px, transparent 1.5px);
+        background-size: 26px 26px;
+    }
+    @media (prefers-reduced-motion: reduce) {
+        .lumina-fade-in { animation: none; }
+    }
+}
