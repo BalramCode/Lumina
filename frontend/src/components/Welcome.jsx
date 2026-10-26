@@ -20,7 +20,7 @@ export default function Welcome() {
           <Button asChild className="h-12 rounded-full px-6 text-base"><Link to="/register">Create an account <ArrowRight className="h-5 w-5" /></Link></Button>
           <Button asChild variant="outline" className="h-12 rounded-full px-6 text-base"><Link to="/login">I already have an account</Link></Button>
         </div>
-        <p className="mt-5 text-xs text-muted-foreground">Account access will be enabled after secure login is added.</p>
+        <p className="mt-5 text-xs text-muted-foreground">Your account is protected by a secure server session after login.</p>
       </div>
     </AuthLayout>
   );

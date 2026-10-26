@@ -1,15 +1,15 @@
 import "@/App.css";
-import { BrowserRouter, Navigate as RouterNavigate, Routes, Route } from "react-router-dom";
-import { AppProvider } from "@/context/AppContext";
+import { BrowserRouter, Navigate as RouterNavigate, Routes, Route, useLocation } from "react-router-dom";
+import { AppProvider, useApp } from "@/context/AppContext";
 import { Toaster } from "@/components/ui/sonner";
 import Layout from "@/components/Layout";
 import Welcome from "@/components/Welcome";
 import Register from "@/components/Register";
 import Login from "@/components/Login";
-import Dashboard from "@/pages/Dashboard";
+import RoleDashboard from "@/pages/RoleDashboard";
 import Learn from "@/pages/Learn";
 import Connect from "@/pages/Connect";
-import Navigate from "@/pages/Navigate";
+import ProfessionalDirectory from "@/pages/ProfessionalDirectory";
 import Support from "@/pages/Support";
 import Include from "@/pages/Include";
 import Empower from "@/pages/Empower";
@@ -18,9 +18,18 @@ import Lesson from "@/pages/Lesson";
 import ClubChat from "@/pages/ClubChat";
 
 function AuthenticationRequired({ children }) {
-  // A server-issued session will replace this guard when login is implemented.
-  // Browser state and a selected role are not treated as authentication.
-  return <RouterNavigate to="/login" replace />;
+  const { authStatus } = useApp();
+  const location = useLocation();
+
+  if (authStatus === "loading") {
+    return <div className="flex min-h-screen items-center justify-center text-sm text-muted-foreground">Checking your secure session…</div>;
+  }
+  if (authStatus !== "authenticated") {
+    return <RouterNavigate to="/login" replace state={{ from: location.pathname }} />;
+  }
+
+  // This only controls client navigation; the backend validates the session.
+  return children;
 }
 
 function ApplicationRoutes() {
@@ -28,12 +37,14 @@ function ApplicationRoutes() {
     <AuthenticationRequired>
       <Layout>
         <Routes>
-          <Route path="/" element={<Dashboard />} />
+          <Route path="/" element={<RoleDashboard />} />
+          <Route path="/dashboard" element={<RoleDashboard />} />
+          <Route path="/dashboard/:role" element={<RoleDashboard />} />
           <Route path="/learn" element={<Learn />} />
           <Route path="/learn/:id" element={<Lesson />} />
           <Route path="/connect" element={<Connect />} />
           <Route path="/connect/club/:id" element={<ClubChat />} />
-          <Route path="/navigate" element={<Navigate />} />
+          <Route path="/navigate" element={<ProfessionalDirectory />} />
           <Route path="/support" element={<Support />} />
           <Route path="/include" element={<Include />} />
           <Route path="/empower" element={<Empower />} />

@@ -4,7 +4,7 @@ import { SECTIONS } from "@/lib/sections";
 import { useApp } from "@/context/AppContext";
 import { LuminaLogo } from "@/components/LuminaLogo";
 import { LANGUAGES } from "@/lib/translations";
-import { NOTIFICATIONS, SEARCH_INDEX, USER } from "@/lib/mockData";
+import { NOTIFICATIONS, SEARCH_INDEX } from "@/lib/mockData";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -149,7 +149,11 @@ function GlobalSearch() {
   );
 }
 
-function ProfileMenu() {
+function userInitials(user) {
+  return user?.name?.split(/\s+/).filter(Boolean).map((part) => part[0]).join("").slice(0, 2).toUpperCase() || "L";
+}
+
+function ProfileMenu({ user }) {
   const { t, logout } = useApp();
   const navigate = useNavigate();
   return (
@@ -157,14 +161,14 @@ function ProfileMenu() {
       <DropdownMenuTrigger asChild>
         <button className="flex items-center gap-2 rounded-full p-1 transition-colors duration-300 hover:bg-muted" data-testid="profile-menu">
           <Avatar className="h-9 w-9">
-            <AvatarFallback style={{ backgroundColor: "#E08A6E", color: "#fff" }}>{USER.initials}</AvatarFallback>
+            <AvatarFallback style={{ backgroundColor: "#E08A6E", color: "#fff" }}>{userInitials(user)}</AvatarFallback>
           </Avatar>
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">
         <DropdownMenuLabel>
           <div className="flex flex-col">
-            <span>{USER.name}</span>
+            <span>{user?.name}</span>
             <span className="text-xs font-normal text-muted-foreground">{t("dash.role")}</span>
           </div>
         </DropdownMenuLabel>
@@ -211,10 +215,10 @@ export default function Layout({ children }) {
           <NavLink to="/profile" data-testid="sidebar-profile"
             className={({ isActive }) => `flex items-center gap-3 rounded-xl px-3 py-2 transition-colors duration-300 ${isActive ? "bg-muted" : "hover:bg-muted"}`}>
             <Avatar className="h-9 w-9">
-              <AvatarFallback style={{ backgroundColor: "#E08A6E", color: "#fff" }}>{user.initials}</AvatarFallback>
+              <AvatarFallback style={{ backgroundColor: "#E08A6E", color: "#fff" }}>{userInitials(user)}</AvatarFallback>
             </Avatar>
             <div className="min-w-0">
-              <p className="truncate text-sm font-semibold">{user.name}</p>
+              <p className="truncate text-sm font-semibold">{user?.name}</p>
               <p className="truncate text-xs text-muted-foreground">{t("dash.role")}</p>
             </div>
           </NavLink>
@@ -236,7 +240,7 @@ export default function Layout({ children }) {
               {dark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
             </Button>
             <Notifications />
-            <ProfileMenu />
+            <ProfileMenu user={user} />
           </div>
         </header>
 

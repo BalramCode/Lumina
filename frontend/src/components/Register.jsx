@@ -52,7 +52,7 @@ export default function Register() {
         return;
       }
       const details = data?.error?.details;
-      setServerError(Array.isArray(details) && details.length > 0 ? details.join(" ") : data?.error?.message || "We could not create your account. Please try again.");
+      setServerError(Array.isArray(details) && details.length > 0 ? details.join(" ") : data?.error?.message || "Lumina returned an unexpected response. Check the API connection and try again.");
     } catch {
       setServerError("We could not reach Lumina. Check your connection and try again.");
     } finally {
@@ -66,7 +66,7 @@ export default function Register() {
         <AuthBrand />
         <div className="mt-10"><h1 className="text-3xl font-bold tracking-tight sm:text-4xl">Create your Lumina account</h1><p className="mt-3 text-lg text-muted-foreground">Join a supportive community for families, professionals, educators, and mentors.</p></div>
         {registeredName ? (
-          <div className="mt-8 rounded-2xl border border-primary/30 bg-accent p-5" role="status"><h2 className="font-bold">Your account has been created.</h2><p className="mt-1 text-sm text-muted-foreground">Thanks, {registeredName}. Login will be available in the next step.</p><Link to="/login" className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-primary hover:underline">View login <ArrowRight className="h-4 w-4" /></Link></div>
+          <div className="mt-8 rounded-2xl border border-primary/30 bg-accent p-5" role="status"><h2 className="font-bold">Your account has been created.</h2><p className="mt-1 text-sm text-muted-foreground">Thanks, {registeredName}. Login to securely continue to Lumina.</p><Link to="/login" className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-primary hover:underline">Login <ArrowRight className="h-4 w-4" /></Link></div>
         ) : (
           <form className="mt-8 space-y-5" onSubmit={handleSubmit} noValidate>
             {serverError && <div className="rounded-xl border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive" role="alert">{serverError}</div>}

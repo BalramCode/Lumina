@@ -15,6 +15,7 @@ async function startServer() {
       "Missing MongoDB configuration",
       "Invalid MongoDB configuration",
       "Invalid CLIENT_ORIGIN",
+      "Missing or invalid SESSION_SECRET",
     ].some((prefix) => error.message.startsWith(prefix));
 
     console.error(

@@ -55,11 +55,20 @@ function getClientOrigins(value) {
   });
 }
 
+function getSessionSecret(value) {
+  if (typeof value !== "string" || value.length < 32) {
+    throw new Error("Missing or invalid SESSION_SECRET. Set a random secret of at least 32 characters in backend/.env.");
+  }
+
+  return value;
+}
+
 const env = {
   port: getPort(process.env.PORT),
   nodeEnv: getNodeEnv(process.env.NODE_ENV),
   mongodbUri: getMongoUri(),
   clientOrigins: getClientOrigins(process.env.CLIENT_ORIGIN),
+  sessionSecret: getSessionSecret(process.env.SESSION_SECRET),
 };
 
 module.exports = env;

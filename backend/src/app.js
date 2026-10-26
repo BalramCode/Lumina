@@ -3,6 +3,7 @@ const cors = require("cors");
 const env = require("./config/env");
 const authRouter = require("./routes/auth");
 const healthRouter = require("./routes/health");
+const professionalsRouter = require("./routes/professionals");
 
 const app = express();
 
@@ -15,12 +16,16 @@ app.use(cors({
 
     return callback(null, false);
   },
-  methods: ["GET", "POST"],
+  methods: ["GET", "POST", "PUT"],
+  allowedHeaders: ["Content-Type", "X-CSRF-Token"],
+  credentials: true,
 }));
 app.use(express.json({ limit: "10kb" }));
+app.use(require("./config/session").parseCookies);
 
 app.use("/api/v1/health", healthRouter);
 app.use("/api/v1/auth", authRouter);
+app.use("/api/v1/professionals", professionalsRouter);
 
 app.use("/api", (req, res) => {
   res.status(404).json({
