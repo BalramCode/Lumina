@@ -72,4 +72,32 @@ function requireRole(...roles) {
   };
 }
 
-module.exports = { requireAuthentication, requireCsrf, requireRole };
+async function optionalAuthentication(req, _res, next) {
+  const sessionToken = req.cookies?.[SESSION_COOKIE_NAME];
+  if (!sessionToken) {
+    return next();
+  }
+
+  try {
+    const session = await Session.findOne({
+      tokenHash: hashToken(sessionToken),
+      expiresAt: { $gt: new Date() },
+    });
+
+    if (!session) {
+      return next();
+    }
+
+    const user = await User.findById(session.userId);
+    if (!user || user.status !== "active") {
+      return next();
+    }
+
+    req.auth = { session, user };
+    return next();
+  } catch {
+    return next();
+  }
+}
+
+module.exports = { requireAuthentication, requireCsrf, requireRole, optionalAuthentication };

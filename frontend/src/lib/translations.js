@@ -5,7 +5,8 @@ export const LANGUAGES = [
 ];
 
 const en = {
-  "app.tagline": "Community Operating System",
+  "app.tagline": "Belonging For Everyone",
+  "nav.dashboard": "Dashboard",
   "nav.learn": "Learn",
   "nav.connect": "Connect",
   "nav.navigate": "Navigate",
@@ -56,6 +57,7 @@ const en = {
 const hi = {
   ...en,
   "app.tagline": "समुदाय संचालन प्रणाली",
+  "nav.dashboard": "डैशबोर्ड",
   "nav.learn": "सीखें",
   "nav.connect": "जुड़ें",
   "nav.navigate": "खोजें",
@@ -104,6 +106,7 @@ const hi = {
 const or = {
   ...en,
   "app.tagline": "ସମ୍ପ୍ରଦାୟ ପରିଚାଳନା ପ୍ରଣାଳୀ",
+  "nav.dashboard": "ଡ୍ୟାସବୋର୍ଡ",
   "nav.learn": "ଶିଖନ୍ତୁ",
   "nav.connect": "ଯୋଡ଼ନ୍ତୁ",
   "nav.navigate": "ଖୋଜନ୍ତୁ",

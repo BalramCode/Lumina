@@ -8,6 +8,12 @@ async function startServer() {
     database = require("./config/database");
     app = require("./app");
     await database.connectToDatabase();
+    const { seedLearningData } = require("./config/seedLearning");
+    await seedLearningData();
+    const { seedProfessionalsData } = require("./config/seedProfessionals");
+    await seedProfessionalsData();
+    const { seedVenuesData } = require("./config/seedVenues");
+    await seedVenuesData();
   } catch (error) {
     const isConfigurationError = [
       "Invalid PORT",

@@ -63,12 +63,26 @@ function getSessionSecret(value) {
   return value;
 }
 
+function getCloudinaryConfig() {
+  const cloudName = process.env.CLOUDINARY_CLOUD_NAME?.trim() || "";
+  const apiKey = process.env.CLOUDINARY_API_KEY?.trim() || "";
+  const apiSecret = process.env.CLOUDINARY_API_SECRET?.trim() || "";
+
+  return {
+    isConfigured: Boolean(cloudName && apiKey && apiSecret),
+    cloudName,
+    apiKey,
+    apiSecret,
+  };
+}
+
 const env = {
   port: getPort(process.env.PORT),
   nodeEnv: getNodeEnv(process.env.NODE_ENV),
   mongodbUri: getMongoUri(),
   clientOrigins: getClientOrigins(process.env.CLIENT_ORIGIN),
   sessionSecret: getSessionSecret(process.env.SESSION_SECRET),
+  cloudinary: getCloudinaryConfig(),
 };
 
 module.exports = env;

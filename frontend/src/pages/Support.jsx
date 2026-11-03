@@ -1,7 +1,14 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useApp } from "@/context/AppContext";
 import { PageHeader, PillarBanner } from "@/components/shared";
 import { AAC_TILES, AAC_HISTORY, CONSULT_PROS } from "@/lib/mockData";
+import {
+  getConsultationAvailability,
+  createConsultation,
+  getMyConsultations,
+  cancelConsultation,
+  getProfessionalDirectory,
+} from "@/lib/api";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -19,13 +26,19 @@ import {
 const tileIcons = { Hand, Utensils, GlassWater, LifeBuoy, Pause, DoorOpen, Check, X, Plus, OctagonX, Smile, Frown, Zap, Blocks, Moon };
 
 export default function Support() {
-  const { t } = useApp();
+  const { t, user, csrfToken } = useApp();
   const [sentence, setSentence] = useState([]);
   const [history, setHistory] = useState(AAC_HISTORY);
   const [crisisOpen, setCrisisOpen] = useState(false);
   const [bookPro, setBookPro] = useState(null);
   const [bookStep, setBookStep] = useState({ date: "", time: "" });
   const [speaking, setSpeaking] = useState(false);
+  const [consultations, setConsultations] = useState([]);
+  const [loadingConsultations, setLoadingConsultations] = useState(false);
+  const [availableSlots, setAvailableSlots] = useState([]);
+  const [bookedSlots, setBookedSlots] = useState([]);
+  const [loadingSlots, setLoadingSlots] = useState(false);
+  const [specialists, setSpecialists] = useState(CONSULT_PROS);
 
   const addWord = (tile) => setSentence((s) => [...s, tile]);
   const undo = () => setSentence((s) => s.slice(0, -1));
@@ -50,11 +63,109 @@ export default function Support() {
   const dates = ["Mon 16", "Tue 17", "Wed 18", "Thu 19", "Fri 20"];
   const times = ["10:00 AM", "11:30 AM", "2:00 PM", "4:00 PM", "5:30 PM"];
 
-  const confirmBooking = () => {
+  const loadConsultations = useCallback(async () => {
+    if (!user) return;
+    setLoadingConsultations(true);
+    try {
+      const { response, data } = await getMyConsultations();
+      if (response.ok && data?.data?.consultations) {
+        setConsultations(data.data.consultations);
+      }
+    } catch { }
+    setLoadingConsultations(false);
+  }, [user]);
+
+  useEffect(() => {
+    loadConsultations();
+  }, [loadConsultations]);
+
+  useEffect(() => {
+    if (user) {
+      getProfessionalDirectory()
+        .then(({ response, data }) => {
+          if (response.ok && data?.data?.profiles?.length) {
+            const mapped = data.data.profiles.slice(0, 4).map((p, idx) => ({
+              id: p.id,
+              name: p.name,
+              spec: p.professionalType,
+              experience: p.yearsExperience,
+              langs: p.languages || [],
+              slot: "Available",
+              initials: p.name.split(/\s+/).map((s) => s[0]).join("").slice(0, 2).toUpperCase(),
+              color: ["#5E8B7E", "#D9A441", "#4F8A9E", "#C98474"][idx % 4],
+            }));
+            setSpecialists(mapped);
+          }
+        })
+        .catch(() => { });
+    }
+  }, [user]);
+
+  const handleSelectDate = async (d) => {
+    setBookStep((s) => ({ ...s, date: d, time: "" }));
+    if (!bookPro) return;
+    setLoadingSlots(true);
+    try {
+      const { response, data } = await getConsultationAvailability({
+        professionalId: bookPro.id,
+        date: d,
+      });
+      if (response.ok && data?.data) {
+        setAvailableSlots(data.data.availableSlots || []);
+        setBookedSlots(data.data.bookedSlots || []);
+      } else {
+        setAvailableSlots(times);
+        setBookedSlots([]);
+      }
+    } catch {
+      setAvailableSlots(times);
+      setBookedSlots([]);
+    } finally {
+      setLoadingSlots(false);
+    }
+  };
+
+  const confirmBooking = async () => {
     if (!bookStep.date || !bookStep.time) { toast.error("Please choose a date and time"); return; }
-    toast.success("Consultation Requested", { description: `${bookPro.name} · ${bookStep.date}, ${bookStep.time}` });
-    setBookPro(null);
-    setBookStep({ date: "", time: "" });
+    try {
+      const { response, data } = await createConsultation(
+        {
+          professionalId: bookPro.id,
+          date: bookStep.date,
+          timeSlot: bookStep.time,
+        },
+        csrfToken
+      );
+
+      if (response.ok) {
+        toast.success("Consultation Requested", { description: `${bookPro.name} · ${bookStep.date}, ${bookStep.time}` });
+        setBookPro(null);
+        setBookStep({ date: "", time: "" });
+        loadConsultations();
+      } else {
+        toast.error(data?.error?.message || "Could not book consultation.");
+      }
+    } catch {
+      toast.error("Network error while booking consultation.");
+    }
+  };
+
+  const handleCancelBooking = async (consultationId) => {
+    try {
+      const { response, data } = await cancelConsultation(
+        consultationId,
+        "Cancelled by parent",
+        csrfToken
+      );
+      if (response.ok) {
+        toast.success("Consultation cancelled.");
+        loadConsultations();
+      } else {
+        toast.error(data?.error?.message || "Could not cancel consultation.");
+      }
+    } catch {
+      toast.error("Network error while cancelling consultation.");
+    }
   };
 
   return (
@@ -69,7 +180,7 @@ export default function Support() {
       />
 
       {/* Communication Section */}
-      <section className="grid grid-cols-1 gap-8 lg:grid-cols-2 lg:items-center">
+      {/* <section className="grid grid-cols-1 gap-8 lg:grid-cols-2 lg:items-center">
         <div>
           <h2 className="text-3xl font-bold leading-tight sm:text-4xl" style={{ color: "#4F8A9E", lineHeight: 1.2 }}>
             Every child deserves a way to be heard.
@@ -85,7 +196,7 @@ export default function Support() {
             className="h-72 w-full object-cover sm:h-96"
           />
         </div>
-      </section>
+      </section> */}
 
       {/* AAC Board */}
       <section>
@@ -197,21 +308,70 @@ export default function Support() {
         <h2 className="mb-1 text-xl font-bold">Talk to a Professional</h2>
         <p className="mb-4 text-sm text-muted-foreground">Book a prototype consultation with a specialist.</p>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {CONSULT_PROS.map((p) => (
+          {specialists.map((p) => (
             <Card key={p.id} data-testid={`consult-${p.id}`} className="flex flex-col rounded-2xl p-5 text-center">
               <Avatar className="mx-auto h-14 w-14">
                 <AvatarFallback style={{ backgroundColor: p.color, color: "#fff" }}>{p.initials}</AvatarFallback>
               </Avatar>
               <h3 className="mt-3 font-bold">{p.name}</h3>
               <p className="text-sm text-muted-foreground">{p.spec}</p>
-              <p className="text-xs text-muted-foreground">{p.experience} yrs · {p.langs.join(", ")}</p>
+              <p className="text-xs text-muted-foreground">{p.experience} yrs · {Array.isArray(p.langs) ? p.langs.join(", ") : ""}</p>
               <Badge variant="secondary" className="mx-auto mt-2 rounded-full">{p.slot}</Badge>
-              <Button data-testid={`book-${p.id}`} onClick={() => setBookPro(p)} className="mt-4 rounded-full">
+              <Button data-testid={`book-${p.id}`} onClick={() => { setBookPro(p); setBookStep({ date: "", time: "" }); setBookedSlots([]); }} className="mt-4 rounded-full">
                 <CalendarClock className="mr-1 h-4 w-4" /> Book Consultation
               </Button>
             </Card>
           ))}
         </div>
+
+        {consultations.length > 0 && (
+          <div className="mt-8 space-y-4">
+            <h3 className="text-lg font-bold">Your Scheduled Consultations</h3>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {consultations.map((c) => (
+                <Card key={c.id} data-testid={`booking-card-${c.id}`} className="flex flex-col justify-between rounded-2xl p-4">
+                  <div>
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <h4 className="font-bold">{c.professional?.name || "Specialist"}</h4>
+                        <p className="text-xs text-muted-foreground">{c.professional?.professionalType}</p>
+                      </div>
+                      <Badge
+                        variant={c.status === "confirmed" ? "secondary" : "outline"}
+                        className={`rounded-full text-xs capitalize ${c.status === "confirmed"
+                            ? "bg-emerald-500/15 text-emerald-700"
+                            : c.status === "cancelled"
+                              ? "text-muted-foreground"
+                              : ""
+                          }`}
+                      >
+                        {c.status}
+                      </Badge>
+                    </div>
+                    <div className="mt-3 space-y-1 text-xs text-muted-foreground">
+                      <p>📅 {c.date} · ⏰ {c.timeSlot}</p>
+                      {c.childName && <p>Child: {c.childName}</p>}
+                      {c.cancellationReason && (
+                        <p className="italic text-destructive/80">Reason: {c.cancellationReason}</p>
+                      )}
+                    </div>
+                  </div>
+                  {c.status === "confirmed" && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      data-testid={`cancel-booking-${c.id}`}
+                      onClick={() => handleCancelBooking(c.id)}
+                      className="mt-4 rounded-full text-xs text-destructive hover:bg-destructive/10"
+                    >
+                      Cancel Consultation
+                    </Button>
+                  )}
+                </Card>
+              ))}
+            </div>
+          </div>
+        )}
       </section>
 
       {/* Crisis modal */}
@@ -247,7 +407,7 @@ export default function Support() {
                 <p className="mb-2 text-sm font-medium">1. Select date</p>
                 <div className="flex flex-wrap gap-2">
                   {dates.map((d) => (
-                    <button key={d} data-testid={`book-date-${d}`} onClick={() => setBookStep((s) => ({ ...s, date: d }))}
+                    <button key={d} data-testid={`book-date-${d}`} onClick={() => handleSelectDate(d)}
                       className={`rounded-xl border px-3 py-2 text-sm transition-colors duration-200 ${bookStep.date === d ? "bg-primary text-primary-foreground" : "hover:bg-muted"}`}>
                       {d}
                     </button>
@@ -255,14 +415,30 @@ export default function Support() {
                 </div>
               </div>
               <div>
-                <p className="mb-2 text-sm font-medium">2. Select time</p>
+                <div className="mb-2 flex items-center justify-between">
+                  <p className="text-sm font-medium">2. Select time</p>
+                  {loadingSlots && <span className="text-xs text-muted-foreground">Checking slots…</span>}
+                </div>
                 <div className="flex flex-wrap gap-2">
-                  {times.map((tm) => (
-                    <button key={tm} data-testid={`book-time-${tm}`} onClick={() => setBookStep((s) => ({ ...s, time: tm }))}
-                      className={`rounded-xl border px-3 py-2 text-sm transition-colors duration-200 ${bookStep.time === tm ? "bg-primary text-primary-foreground" : "hover:bg-muted"}`}>
-                      {tm}
-                    </button>
-                  ))}
+                  {times.map((tm) => {
+                    const isBooked = bookedSlots.includes(tm);
+                    return (
+                      <button
+                        key={tm}
+                        data-testid={`book-time-${tm}`}
+                        disabled={isBooked}
+                        onClick={() => setBookStep((s) => ({ ...s, time: tm }))}
+                        className={`rounded-xl border px-3 py-2 text-sm transition-colors duration-200 ${isBooked
+                            ? "cursor-not-allowed opacity-40 line-through bg-muted/60"
+                            : bookStep.time === tm
+                              ? "bg-primary text-primary-foreground"
+                              : "hover:bg-muted"
+                          }`}
+                      >
+                        {tm} {isBooked ? "(Booked)" : ""}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
               <DialogFooter>

@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from "react";
-import { NavLink, useNavigate } from "react-router-dom";
+import { NavLink, useNavigate, useLocation } from "react-router-dom";
 import { SECTIONS } from "@/lib/sections";
 import { useApp } from "@/context/AppContext";
 import { LuminaLogo } from "@/components/LuminaLogo";
@@ -14,15 +14,51 @@ import {
 } from "@/components/ui/dropdown-menu";
 import {
   Sun, Moon, Bell, Search, Settings, Globe, User as UserIcon, LogOut,
-  MessageSquare, BookOpen, CalendarClock, Users,
+  MessageSquare, BookOpen, CalendarClock, Users, LayoutDashboard,
 } from "lucide-react";
+import { roleMeta } from "@/pages/dashboards/dashboardMeta";
 
 const notifIcons = { MessageSquare, BookOpen, CalendarClock, Users };
 
 function NavItems({ onNavigate }) {
-  const { t } = useApp();
+  const { t, user, authStatus } = useApp();
+  const location = useLocation();
+
+  const isAuthenticated = authStatus === "authenticated" && Boolean(user);
+  const dashboardPath = user?.role ? `/dashboard/${user.role}` : "/dashboard";
+  const isDashboardActive =
+    location.pathname === "/dashboard" ||
+    location.pathname.startsWith("/dashboard/") ||
+    location.pathname === "/";
+  const dashboardColor = (user?.role && roleMeta[user.role]?.color) || "#5E8B7E";
+  const dashboardTint = `${dashboardColor}26`;
+
   return (
     <>
+      {isAuthenticated && (
+        <NavLink
+          to={dashboardPath}
+          onClick={onNavigate}
+          data-testid="nav-dashboard"
+          className={() =>
+            `group flex items-center gap-3 rounded-xl px-3 py-3 text-base font-medium transition-colors duration-300 ${
+              isDashboardActive ? "text-foreground" : "text-muted-foreground hover:text-foreground hover:bg-muted"
+            }`
+          }
+          style={() => (isDashboardActive ? { backgroundColor: dashboardTint } : {})}
+        >
+          <span
+            className="flex h-9 w-9 items-center justify-center rounded-lg transition-colors duration-300"
+            style={{
+              backgroundColor: isDashboardActive ? dashboardColor : `${dashboardColor}22`,
+              color: isDashboardActive ? "#fff" : dashboardColor,
+            }}
+          >
+            <LayoutDashboard className="h-5 w-5" strokeWidth={1.75} />
+          </span>
+          {t("nav.dashboard")}
+        </NavLink>
+      )}
       {SECTIONS.map((s) => (
         <NavLink
           key={s.id}
@@ -189,7 +225,17 @@ function ProfileMenu({ user }) {
 }
 
 export default function Layout({ children }) {
-  const { t, dark, toggleDark, user } = useApp();
+  const { t, dark, toggleDark, user, authStatus } = useApp();
+  const location = useLocation();
+
+  const isAuthenticated = authStatus === "authenticated" && Boolean(user);
+  const dashboardPath = user?.role ? `/dashboard/${user.role}` : "/dashboard";
+  const isDashboardActive =
+    location.pathname === "/dashboard" ||
+    location.pathname.startsWith("/dashboard/") ||
+    location.pathname === "/";
+  const dashboardColor = (user?.role && roleMeta[user.role]?.color) || "#5E8B7E";
+
   return (
     <div className="min-h-screen bg-background">
       {/* Sidebar (desktop) */}
@@ -254,7 +300,30 @@ export default function Layout({ children }) {
 
       {/* Bottom nav (mobile) */}
       <nav className="fixed inset-x-0 bottom-0 z-40 border-t bg-card lg:hidden">
-        <div className="grid grid-cols-6">
+        <div
+          className={`grid ${isAuthenticated ? "grid-cols-7" : "grid-cols-6"}`}
+          style={{ gridTemplateColumns: `repeat(${isAuthenticated ? 7 : 6}, minmax(0, 1fr))` }}
+        >
+          {isAuthenticated && (
+            <NavLink
+              to={dashboardPath}
+              data-testid="bottomnav-dashboard"
+              className={() =>
+                `flex flex-col items-center gap-1 py-2.5 text-[10px] font-medium transition-colors duration-300 ${
+                  isDashboardActive ? "" : "text-muted-foreground"
+                }`
+              }
+              style={() => (isDashboardActive ? { color: dashboardColor } : {})}
+            >
+              <span
+                className="flex h-8 w-8 items-center justify-center rounded-lg transition-colors duration-300"
+                style={{ backgroundColor: isDashboardActive ? `${dashboardColor}22` : "transparent" }}
+              >
+                <LayoutDashboard className="h-5 w-5" strokeWidth={1.75} />
+              </span>
+              <span className="truncate max-w-full px-0.5">{t("nav.dashboard")}</span>
+            </NavLink>
+          )}
           {SECTIONS.map((s) => (
             <NavLink
               key={s.id}
@@ -273,7 +342,7 @@ export default function Layout({ children }) {
                     style={{ backgroundColor: isActive ? `${s.color}22` : "transparent" }}>
                     <s.icon className="h-5 w-5" strokeWidth={1.75} />
                   </span>
-                  {t(s.labelKey)}
+                  <span className="truncate max-w-full px-0.5">{t(s.labelKey)}</span>
                 </>
               )}
             </NavLink>

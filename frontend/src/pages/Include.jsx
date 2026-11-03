@@ -1,7 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useApp } from "@/context/AppContext";
 import { PageHeader, ScoreRing } from "@/components/shared";
 import { INCLUSIVE_CATEGORIES, INCLUSIVE_PLACES, INCLUSIVE_REVIEWS } from "@/lib/mockData";
+import { getInclusiveVenues } from "@/lib/api";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -22,8 +23,23 @@ export default function Include() {
   const [reviews, setReviews] = useState(INCLUSIVE_REVIEWS);
   const [reviewFor, setReviewFor] = useState(null);
   const [form, setForm] = useState({ stars: 5, sensory: 4, accs: [], text: "" });
+  const [livePlaces, setLivePlaces] = useState([]);
 
-  const places = cat === "All" ? INCLUSIVE_PLACES : INCLUSIVE_PLACES.filter((p) => p.category === cat);
+  useEffect(() => {
+    let active = true;
+    getInclusiveVenues({ category: cat })
+      .then(({ response, data }) => {
+        if (!active) return;
+        if (response.ok && data?.data?.venues?.length) {
+          setLivePlaces(data.data.venues);
+        }
+      })
+      .catch(() => {});
+    return () => { active = false; };
+  }, [cat]);
+
+  const fallbackPlaces = cat === "All" ? INCLUSIVE_PLACES : INCLUSIVE_PLACES.filter((p) => p.category === cat);
+  const places = livePlaces.length > 0 ? livePlaces : fallbackPlaces;
 
   const toggleAcc = (a) => setForm((f) => ({ ...f, accs: f.accs.includes(a) ? f.accs.filter((x) => x !== a) : [...f.accs, a] }));
 

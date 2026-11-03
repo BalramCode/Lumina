@@ -22,7 +22,7 @@ export default function RoleDashboard() {
   const DashboardContent = dashboardByRole[user?.role];
 
   if (!meta || !DashboardContent) return null;
-  if (role && role !== user.role) return <Navigate to={`/dashboard/${user.role}`} replace />;
+  if (role !== user.role) return <Navigate to={`/dashboard/${user.role}`} replace />;
 
   return <div className="space-y-8"><PageHeader title={meta.title} subtitle={meta.subtitle} icon={meta.icon} color={meta.color} /><DashboardContent /></div>;
 }

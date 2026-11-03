@@ -25,9 +25,7 @@ export const PillarBanner = ({ title, subtitle, icon: Icon, color, children }) =
     style={{ backgroundColor: `${color}14`, borderColor: `${color}33` }}
   >
     <div className="relative z-10">
-      <Badge className="mb-4 gap-1.5 border-0 text-white" style={{ backgroundColor: color }}>
-        <Sparkles className="h-3.5 w-3.5" /> Solution pillar
-      </Badge>
+
       <div className="flex items-start gap-4">
         {Icon && (
           <div className="hidden sm:flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl text-white" style={{ backgroundColor: color }}>

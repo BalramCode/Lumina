@@ -26,8 +26,15 @@ export function AppProvider({ children }) {
     getCurrentSession().then(({ response, data }) => {
       if (!active) return;
       if (response.ok && data?.data?.user) {
-        setUser(data.data.user);
+        const currentUser = data.data.user;
+        setUser(currentUser);
         setCsrfToken(data.data.csrfToken || "");
+        if (currentUser.preferences?.theme) {
+          setDark(currentUser.preferences.theme === "dark");
+        }
+        if (currentUser.preferences?.lang) {
+          setLang(currentUser.preferences.lang);
+        }
         setAuthStatus("authenticated");
       } else {
         setAuthStatus("unauthenticated");
@@ -41,7 +48,23 @@ export function AppProvider({ children }) {
   const establishSession = useCallback((authenticatedUser, token) => {
     setUser(authenticatedUser);
     setCsrfToken(token);
+    if (authenticatedUser?.preferences?.theme) {
+      setDark(authenticatedUser.preferences.theme === "dark");
+    }
+    if (authenticatedUser?.preferences?.lang) {
+      setLang(authenticatedUser.preferences.lang);
+    }
     setAuthStatus("authenticated");
+  }, []);
+
+  const updateUser = useCallback((updatedUser) => {
+    setUser((prev) => ({ ...prev, ...updatedUser }));
+    if (updatedUser?.preferences?.theme) {
+      setDark(updatedUser.preferences.theme === "dark");
+    }
+    if (updatedUser?.preferences?.lang) {
+      setLang(updatedUser.preferences.lang);
+    }
   }, []);
 
   const logout = useCallback(async () => {
@@ -66,7 +89,7 @@ export function AppProvider({ children }) {
   const value = {
     dark, setDark, toggleDark: () => setDark((d) => !d),
     lang, setLang, t,
-    authStatus, user, csrfToken, establishSession, logout,
+    authStatus, user, csrfToken, establishSession, updateUser, logout,
     passport, setPassport,
   };
 

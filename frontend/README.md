@@ -1,8 +1,8 @@
-# Lumina - Community Operating System
+# Lumina - Belonging For Everyone
 
 > This project is currently a frontend implementation/prototype. Backend services and persistent data integration are not yet connected.
 
-Lumina is a community operating system designed to connect families, professionals, resources, and communities to make autism support more accessible, inclusive, and free. It transitions the experience from social discrimination to social acceptance, ensuring no parent navigates autism alone. The current implementation serves as a functional frontend prototype showcasing the UI, workflows, and user experience.
+Lumina is a Belonging For Everyone designed to connect families, professionals, resources, and communities to make autism support more accessible, inclusive, and free. It transitions the experience from social discrimination to social acceptance, ensuring no parent navigates autism alone. The current implementation serves as a functional frontend prototype showcasing the UI, workflows, and user experience.
 
 ---
 

@@ -1,9 +1,10 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect, useCallback } from "react";
 import { useApp } from "@/context/AppContext";
 import { PageHeader, PillarBanner, DemoTag } from "@/components/shared";
 import {
   PROFESSIONALS, PROF_TYPES, PROF_LANGS, DISTRICTS, DIVIDE_STATS, RESEARCH,
 } from "@/lib/mockData";
+import { getProfessionalDirectory, getInclusiveVenues } from "@/lib/api";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -18,7 +19,7 @@ import {
 import { toast } from "sonner";
 import {
   Compass, MapPinned, Network, MapPin, Star, Check, Home, Wifi, ArrowRight,
-  Users, BookOpen, GraduationCap, Building2, Microscope,
+  Users, BookOpen, GraduationCap, Building2, Microscope, ShieldCheck, Sparkles, RefreshCw,
 } from "lucide-react";
 
 function ProCard({ p, onView, connected, onConnect }) {
@@ -31,7 +32,13 @@ function ProCard({ p, onView, connected, onConnect }) {
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
             <h3 className="truncate font-bold">{p.name}</h3>
-            <DemoTag />
+            {p.isLive ? (
+              <Badge variant="secondary" className="rounded-full text-[10px] text-emerald-700 bg-emerald-500/15">
+                Verified Specialist
+              </Badge>
+            ) : (
+              <DemoTag />
+            )}
           </div>
           <p className="text-sm text-muted-foreground">{p.type}</p>
         </div>
@@ -41,9 +48,9 @@ function ProCard({ p, onView, connected, onConnect }) {
       </div>
       <div className="mt-3 grid grid-cols-2 gap-2 text-sm">
         <span className="flex items-center gap-1 text-muted-foreground"><MapPin className="h-4 w-4" /> {p.location}</span>
-        <span className="text-muted-foreground">{p.distance} km away</span>
+        <span className="text-muted-foreground">{p.distance !== null && p.distance !== undefined ? `${p.distance} km away` : "Nearby"}</span>
         <span className="text-muted-foreground">{p.experience} yrs exp.</span>
-        <span className="text-muted-foreground">{p.spec}</span>
+        <span className="text-muted-foreground truncate">{p.spec}</span>
       </div>
       <div className="mt-2 flex flex-wrap gap-1">
         {p.langs.map((l) => <Badge key={l} variant="outline" className="rounded-full text-xs">{l}</Badge>)}
@@ -74,7 +81,7 @@ function MockMap({ pros, onPin }) {
         <div className="absolute left-0 top-1/3 h-2 w-full -rotate-3 bg-black/5" />
         <div className="absolute left-1/2 top-0 h-full w-2 rotate-6 bg-black/5" />
         <div className="absolute left-4 top-4 rounded-full bg-card/90 px-3 py-1 text-xs font-medium shadow-sm">
-          Bhubaneswar - Nearby Clinics
+          Bhubaneswar - Nearby Clinics & Inclusive Hubs
         </div>
         {pros.map((p) => (
           <button
@@ -98,18 +105,102 @@ function MockMap({ pros, onPin }) {
 const researchIcons = { "University Study": GraduationCap, "Evidence Resource": BookOpen, "Autism Research": Microscope, "Community Survey": Users };
 
 export default function NavigatePage() {
-  const { t } = useApp();
+  const { t, user } = useApp();
   const [type, setType] = useState("All");
   const [langF, setLangF] = useState("All");
   const [maxDist, setMaxDist] = useState([15]);
   const [connected, setConnected] = useState({});
   const [preview, setPreview] = useState(null);
 
-  const filtered = useMemo(() => PROFESSIONALS.filter((p) =>
+  // Live professionals state
+  const [livePros, setLivePros] = useState([]);
+  const [loadingPros, setLoadingPros] = useState(false);
+
+  // Live inclusive venues state
+  const [venues, setVenues] = useState([]);
+  const [loadingVenues, setLoadingVenues] = useState(true);
+  const [venuesError, setVenuesError] = useState("");
+  const [venueCategory, setVenueCategory] = useState("All");
+  const [venueCity, setVenueCity] = useState("All");
+
+  // Load live professionals from MongoDB
+  useEffect(() => {
+    let active = true;
+    setLoadingPros(true);
+    getProfessionalDirectory()
+      .then(({ response, data }) => {
+        if (!active) return;
+        if (response.ok && data?.data?.profiles?.length) {
+          const mapCoords = [
+            { top: 22, left: 30, color: "#5E8B7E" },
+            { top: 48, left: 58, color: "#4F8A9E" },
+            { top: 68, left: 40, color: "#D9A441" },
+            { top: 34, left: 72, color: "#C98474" },
+            { top: 60, left: 20, color: "#5FA07E" },
+            { top: 18, left: 55, color: "#7A9E9F" },
+          ];
+          const mapped = data.data.profiles.map((p, idx) => {
+            const fallbackCoord = mapCoords[idx % mapCoords.length];
+            return {
+              id: p.id,
+              name: p.name,
+              type: p.professionalType,
+              location: p.city || "Bhubaneswar",
+              distance: typeof p.distance === "number" ? p.distance : (idx + 1) * 2.4,
+              experience: p.yearsExperience,
+              spec: p.specialization || "Clinical Practice",
+              langs: Array.isArray(p.languages) ? p.languages : ["English"],
+              rating: p.rating || 4.9,
+              availability: p.availability === "accepting_clients" ? "Available today" : "Next slot available",
+              initials: p.name?.split(/\s+/).map((s) => s[0]).join("").slice(0, 2).toUpperCase() || "SP",
+              color: fallbackCoord.color,
+              top: fallbackCoord.top,
+              left: fallbackCoord.left,
+              isLive: true,
+            };
+          });
+          setLivePros(mapped);
+        }
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (active) setLoadingPros(false);
+      });
+    return () => { active = false; };
+  }, []);
+
+  // Load live inclusive venues from MongoDB
+  const loadVenues = useCallback(async () => {
+    setLoadingVenues(true);
+    setVenuesError("");
+    try {
+      const params = {};
+      if (venueCategory && venueCategory !== "All") params.category = venueCategory;
+      if (venueCity && venueCity !== "All") params.city = venueCity;
+      const { response, data } = await getInclusiveVenues(params);
+      if (response.ok && data?.data?.venues) {
+        setVenues(data.data.venues);
+      } else {
+        setVenuesError(data?.error?.message || "Could not load inclusive venues.");
+      }
+    } catch {
+      setVenuesError("Network error loading inclusive venues.");
+    } finally {
+      setLoadingVenues(false);
+    }
+  }, [venueCategory, venueCity]);
+
+  useEffect(() => {
+    loadVenues();
+  }, [loadVenues]);
+
+  const activePros = livePros.length > 0 ? livePros : PROFESSIONALS;
+
+  const filtered = useMemo(() => activePros.filter((p) =>
     (type === "All" || p.type === type) &&
     (langF === "All" || p.langs.includes(langF)) &&
     p.distance <= maxDist[0]
-  ), [type, langF, maxDist]);
+  ), [activePros, type, langF, maxDist]);
 
   const handleConnect = (p) => {
     if (connected[p.id]) return;
@@ -261,6 +352,98 @@ export default function NavigatePage() {
             </Card>
           ))}
         </div>
+      </section>
+
+      {/* Inclusive Community Venues Section */}
+      <section className="space-y-4" data-testid="inclusive-venues-section">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div>
+            <div className="flex items-center gap-2">
+              <ShieldCheck className="h-5 w-5 text-primary" />
+              <h2 className="text-xl font-bold">Inclusive Community Venues</h2>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Sensory-friendly public spaces, libraries, salons and community hubs from MongoDB.
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Select value={venueCategory} onValueChange={setVenueCategory}>
+              <SelectTrigger className="w-[140px] text-xs"><SelectValue placeholder="Category" /></SelectTrigger>
+              <SelectContent>
+                {["All", "Libraries", "Restaurants", "Salons", "Parks", "Shopping Spaces", "Community Centers"].map((c) => (
+                  <SelectItem key={c} value={c}>{c}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Select value={venueCity} onValueChange={setVenueCity}>
+              <SelectTrigger className="w-[130px] text-xs"><SelectValue placeholder="City" /></SelectTrigger>
+              <SelectContent>
+                {["All", "Bhubaneswar", "Cuttack", "Rourkela"].map((city) => (
+                  <SelectItem key={city} value={city}>{city}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        {loadingVenues ? (
+          <div className="p-8 text-center text-sm text-muted-foreground flex items-center justify-center gap-2">
+            <RefreshCw className="h-4 w-4 animate-spin text-primary" />
+            Loading inclusive venues from database…
+          </div>
+        ) : venuesError ? (
+          <Card className="p-6 text-center text-sm text-destructive bg-destructive/5 rounded-2xl">
+            {venuesError}
+          </Card>
+        ) : venues.length === 0 ? (
+          <Card className="p-8 text-center text-sm text-muted-foreground rounded-2xl">
+            No inclusive venues match the selected filters.
+          </Card>
+        ) : (
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {venues.map((v) => (
+              <Card key={v.id} data-testid={`venue-${v.id}`} className="flex flex-col justify-between rounded-2xl p-5">
+                <div>
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <h3 className="font-bold text-base">{v.name}</h3>
+                      <p className="text-xs text-muted-foreground">{v.category} · {v.location}</p>
+                    </div>
+                    <Badge variant="secondary" className="rounded-full text-xs font-bold text-emerald-700 bg-emerald-500/15">
+                      Score: {v.score}
+                    </Badge>
+                  </div>
+
+                  <p className="mt-2 text-xs leading-5 text-muted-foreground line-clamp-2">
+                    {v.description || v.address}
+                  </p>
+
+                  {/* Sensory Features */}
+                  <div className="mt-3 flex flex-wrap gap-1">
+                    {v.sensory.map((s) => (
+                      <Badge key={s} variant="outline" className="rounded-full text-[10px] bg-accent/40">
+                        {s}
+                      </Badge>
+                    ))}
+                    {v.access.map((a) => (
+                      <Badge key={a} variant="outline" className="rounded-full text-[10px] bg-primary/10 text-primary border-primary/20">
+                        {a}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="mt-4 pt-3 border-t flex items-center justify-between text-xs text-muted-foreground">
+                  <span className="flex items-center gap-1 font-semibold text-amber-600">
+                    <Star className="h-3.5 w-3.5 fill-current" /> {v.rating}
+                  </span>
+                  <span className="truncate max-w-[180px]">{v.address}</span>
+                </div>
+              </Card>
+            ))}
+          </div>
+        )}
       </section>
 
       {/* Research portal */}

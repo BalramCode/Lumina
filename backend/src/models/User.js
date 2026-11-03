@@ -34,9 +34,26 @@ const userSchema = new mongoose.Schema(
       enum: ["active", "suspended"],
       default: "active",
     },
+    isVerified: {
+      type: Boolean,
+      default: false,
+    },
     guardianConsent: {
       type: Boolean,
       required: true,
+    },
+    location: {
+      city: { type: String, trim: true, maxlength: 100, default: "" },
+      district: { type: String, trim: true, maxlength: 100, default: "" },
+      state: { type: String, trim: true, maxlength: 100, default: "" },
+    },
+    preferences: {
+      theme: { type: String, enum: ["light", "dark"], default: "light" },
+      lang: { type: String, enum: ["en", "hi", "or"], default: "en" },
+      reduceMotion: { type: Boolean, default: false },
+      largeText: { type: Boolean, default: false },
+      quietNotifs: { type: Boolean, default: false },
+      emailUpdates: { type: Boolean, default: false },
     },
   },
   {
@@ -54,6 +71,20 @@ userSchema.methods.toSafeObject = function toSafeObject() {
     email: this.email,
     role: this.role,
     status: this.status,
+    isVerified: Boolean(this.isVerified),
+    location: {
+      city: this.location?.city || "",
+      district: this.location?.district || "",
+      state: this.location?.state || "",
+    },
+    preferences: {
+      theme: this.preferences?.theme || "light",
+      lang: this.preferences?.lang || "en",
+      reduceMotion: Boolean(this.preferences?.reduceMotion),
+      largeText: Boolean(this.preferences?.largeText),
+      quietNotifs: Boolean(this.preferences?.quietNotifs),
+      emailUpdates: Boolean(this.preferences?.emailUpdates),
+    },
     createdAt: this.createdAt,
   };
 };

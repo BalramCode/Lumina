@@ -4,6 +4,11 @@ const env = require("./config/env");
 const authRouter = require("./routes/auth");
 const healthRouter = require("./routes/health");
 const professionalsRouter = require("./routes/professionals");
+const usersRouter = require("./routes/users");
+const dashboardRouter = require("./routes/dashboard");
+const learningRouter = require("./routes/learning");
+const consultationsRouter = require("./routes/consultations");
+const venuesRouter = require("./routes/venues");
 
 const app = express();
 
@@ -16,7 +21,7 @@ app.use(cors({
 
     return callback(null, false);
   },
-  methods: ["GET", "POST", "PUT"],
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
   allowedHeaders: ["Content-Type", "X-CSRF-Token"],
   credentials: true,
 }));
@@ -26,6 +31,11 @@ app.use(require("./config/session").parseCookies);
 app.use("/api/v1/health", healthRouter);
 app.use("/api/v1/auth", authRouter);
 app.use("/api/v1/professionals", professionalsRouter);
+app.use("/api/v1/users", usersRouter);
+app.use("/api/v1/dashboard", dashboardRouter);
+app.use("/api/v1/learning", learningRouter);
+app.use("/api/v1/consultations", consultationsRouter);
+app.use("/api/v1/venues", venuesRouter);
 
 app.use("/api", (req, res) => {
   res.status(404).json({

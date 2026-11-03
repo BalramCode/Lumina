@@ -48,15 +48,15 @@ export default function Connect() {
     <div className="space-y-10">
       <PageHeader title={t("connect.title")} subtitle={t("connect.subtitle")} icon={Users} color="#E08A6E" />
 
-      <PillarBanner
+      {/* <PillarBanner
         title="Breaking the Chains of Isolation"
         subtitle="Find people who understand your journey."
         icon={HeartHandshake}
         color="#E08A6E"
-      />
+      /> */}
 
       {/* Caregiver Section */}
-      <section className="grid grid-cols-1 gap-8 lg:grid-cols-2 lg:items-center">
+      {/* <section className="grid grid-cols-1 gap-8 lg:grid-cols-2 lg:items-center">
         <div>
           <h2 className="text-3xl font-bold leading-tight sm:text-4xl" style={{ color: "#E08A6E", lineHeight: 1.2 }}>
             Supporting the child also means supporting the person who cares for them.
@@ -72,7 +72,7 @@ export default function Connect() {
             className="h-72 w-full object-cover sm:h-96"
           />
         </div>
-      </section>
+      </section> */}
 
       {/* Care Circle + Chat */}
       <section className="grid grid-cols-1 gap-6 lg:grid-cols-5">
@@ -149,7 +149,7 @@ export default function Connect() {
       </section>
 
       {/* Lumina Clubs Visual */}
-      <section className="grid grid-cols-1 gap-8 lg:grid-cols-2 lg:items-center">
+      {/* <section className="grid grid-cols-1 gap-8 lg:grid-cols-2 lg:items-center">
         <div className="order-2 lg:order-1 relative overflow-hidden rounded-3xl border">
           <img
             src="https://images.unsplash.com/photo-1511632765486-a01980e01a18?q=80&w=1200&auto=format&fit=crop"
@@ -165,7 +165,7 @@ export default function Connect() {
             Lumina Clubs bring children, families, professionals, and peers together in safe, sensory-friendly community spaces.
           </p>
         </div>
-      </section>
+      </section> */}
 
       {/* Community Circles */}
       <section>

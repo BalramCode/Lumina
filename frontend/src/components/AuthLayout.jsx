@@ -30,7 +30,7 @@ export function AuthBrand() {
       <LuminaLogo size={48} />
       <div>
         <p className="text-2xl font-bold leading-none">Lumina</p>
-        <p className="mt-1 text-sm text-muted-foreground">Community Operating System</p>
+        <p className="mt-1 text-sm text-muted-foreground">Belonging For Everyone</p>
       </div>
     </div>
   );

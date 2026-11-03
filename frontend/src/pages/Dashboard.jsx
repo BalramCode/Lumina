@@ -1,8 +1,9 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useApp } from "@/context/AppContext";
 import { SECTIONS } from "@/lib/sections";
-import { HOW_HELPS, TODAY_STATS, LEARN_PROGRESS } from "@/lib/mockData";
+import { HOW_HELPS, TODAY_STATS } from "@/lib/mockData";
+import { getLearningProgress } from "@/lib/api";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -17,6 +18,26 @@ const statIcons = { BookOpen, Users, MapPin, CalendarClock };
 export default function Dashboard() {
   const { t, user } = useApp();
   const navigate = useNavigate();
+  const [learningProgress, setLearningProgress] = useState({
+    progressPercent: 0,
+    completedCount: 0,
+    totalModules: 0,
+  });
+
+  useEffect(() => {
+    let active = true;
+    getLearningProgress().then(({ response, data }) => {
+      if (!active) return;
+      if (response.ok && data?.data) {
+        setLearningProgress({
+          progressPercent: data.data.progressPercent || 0,
+          completedCount: data.data.completedCount || 0,
+          totalModules: data.data.totalModules || 0,
+        });
+      }
+    }).catch(() => {});
+    return () => { active = false; };
+  }, []);
 
   return (
     <div className="space-y-10">
@@ -125,12 +146,16 @@ export default function Dashboard() {
         </div>
         <Card className="rounded-2xl p-6">
           <h3 className="text-lg font-bold">Your Learning Progress</h3>
-          <p className="mt-1 text-sm text-muted-foreground">Keep building confidence at home.</p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {learningProgress.totalModules > 0
+              ? `${learningProgress.completedCount} of ${learningProgress.totalModules} lessons completed.`
+              : "Keep building confidence at home."}
+          </p>
           <div className="mt-5 flex items-end justify-between">
-            <span className="text-3xl font-bold text-primary">{LEARN_PROGRESS}%</span>
+            <span className="text-3xl font-bold text-primary">{learningProgress.progressPercent}%</span>
             <span className="text-sm text-muted-foreground">Complete</span>
           </div>
-          <Progress value={LEARN_PROGRESS} className="mt-3 h-3" />
+          <Progress value={learningProgress.progressPercent} className="mt-3 h-3" />
           <button data-testid="dashboard-continue-learning" onClick={() => navigate("/learn")}
             className="mt-5 inline-flex items-center gap-1 text-sm font-semibold text-primary">
             Continue learning <ArrowRight className="h-4 w-4" />
